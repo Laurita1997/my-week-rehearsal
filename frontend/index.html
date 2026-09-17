@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Rehearsal Schedule Filter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
+  <div class="max-w-2xl mx-auto space-y-6">
+    
+    <header class="text-center space-y-2">
+      <h1 class="text-3xl font-bold tracking-tight text-white">🩰 Personal Rehearsal Finder</h1>
+      <p class="text-slate-400 text-sm">Upload your schedule, cast lists, and filter your personalized calls.</p>
+    </header>
+
+    <!-- Upload Form -->
+    <form id="scheduleForm" class="bg-slate-800 p-6 rounded-2xl shadow-xl space-y-4 border border-slate-700">
+      
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Dancer Name</label>
+        <input type="text" id="dancerName" required placeholder="e.g. Fernandez G." 
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Weekly Schedule PDF</label>
+        <input type="file" id="schedulePdf" accept=".pdf" required 
+          class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Cast List PDFs (Select Multiple)</label>
+        <input type="file" id="castPdfs" accept=".pdf" multiple required 
+          class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Opt-Out Dates (Optional)</label>
+        <input type="text" id="optOutDates" placeholder="e.g. 18.09, 25.09" 
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500" />
+      </div>
+
+      <button type="submit" 
+        class="w-full bg-indigo-600 hover:bg-indigo-500 font-medium py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/30">
+        Generate My Schedule 🚀
+      </button>
+    </form>
+
+    <!-- Results Display -->
+    <div id="results" class="hidden bg-slate-800 p-6 rounded-2xl border border-slate-700 space-y-4">
+      <h2 class="text-xl font-bold text-indigo-400 border-b border-slate-700 pb-2">Your Personal Schedule</h2>
+      <div id="scheduleOutput" class="space-y-4 text-sm font-mono whitespace-pre-wrap"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const form = document.getElementById('scheduleForm');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData();
+      formData.append('dancer_name', document.getElementById('dancerName').value);
+      formData.append('opt_out_dates', document.getElementById('optOutDates').value);
+      formData.append('schedule_pdf', document.getElementById('schedulePdf').files[0]);
+      
+      const castFiles = document.getElementById('castPdfs').files;
+      for (let i = 0; i < castFiles.length; i++) {
+        formData.append('cast_pdfs', castFiles[i]);
+      }
+
+      const outputDiv = document.getElementById('scheduleOutput');
+      const resultsDiv = document.getElementById('results');
+      
+      resultsDiv.classList.remove('hidden');
+      outputDiv.textContent = "Processing PDFs...";
+
+      try {
+        const response = await fetch('/filter-schedule/', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        let outputText = "";
+        for (const [day, calls] of Object.entries(data.schedule)) {
+          outputText += `\n**${day}**\n`;
+          calls.forEach(call => {
+            outputText += `• ${call}\n`;
+          });
+        }
+
+        outputText += "\n**Feierabend:**\n";
+        for (const [day, time] of Object.entries(data.feierabend)) {
+          outputText += `${day}: ${time}\n`;
+        }
+
+        outputDiv.textContent = outputText;
+      } catch (err) {
+        outputDiv.textContent = "Error processing schedule. Make sure the backend server is running.";
+      }
+    });
+  </script>
+</body>
+</html>
