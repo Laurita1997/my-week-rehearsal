@@ -2,7 +2,8 @@ from fastapi import FastAPI, UploadFile, File, Form
 from typing import List
 import shutil
 import os
-from engine import parse_schedule_pdf, extract_dancer_roles, filter_dancer_schedule
+from backend.engine import parse_schedule_pdf, extract_dancer_roles, filter_dancer_schedule
+
 
 app = FastAPI(title="Ballet Schedule Parsing Engine")
 
